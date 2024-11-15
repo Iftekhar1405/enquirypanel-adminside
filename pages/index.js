@@ -1,115 +1,79 @@
-import Image from "next/image";
-import localFont from "next/font/local";
+import {
+    Box,
+    Text,
+    Accordion,
+    AccordionItem,
+    AccordionButton,
+    AccordionPanel,
+    AccordionIcon,
+    VStack,
+    Spinner
+} from "@chakra-ui/react";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import Dashboard from './components/Dashboard';
+import EnquiriesTable from "@/pages/components/EnquiriesTable";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const fetchData = async (URL) => {
+    const res = await axios.get(URL);
+    return res.data;
+};
 
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ['enquiries'],
+        queryFn: () => fetchData('http://localhost:5000/enquiry') // Replace with your actual API endpoint
+    });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    if (isLoading) {
+        return <Box><Spinner/></Box>;
+    }
+
+    if (isError) {
+        return <Box>Error: {error.message}</Box>;
+    }
+
+    return (
+        <>
+            <Dashboard/>
+            <EnquiriesTable/>
+        <Box maxW="800px" mx="auto" p="4">
+
+            <Text fontSize="2xl" fontWeight="bold" mb="6">
+                Enquiries
+            </Text>
+            <Accordion allowToggle>
+                {data && data.length > 0 ? (
+                    data.map((enquiry) => (
+                        <AccordionItem key={enquiry._id} borderWidth="1px" borderRadius="md" mb="2">
+                            <h2>
+                                <AccordionButton _expanded={{ bg: "red.100" }}>
+                                    <Box as="span" flex="1" textAlign="left" fontWeight="medium" fontSize="lg">
+                                        {enquiry.studentFirstName} {enquiry.studentLastName} (Grade {enquiry.grade})
+                                    </Box>
+                                    <AccordionIcon />
+                                </AccordionButton>
+                            </h2>
+                            <AccordionPanel pb="4">
+                                <VStack align="start" spacing="2">
+                                    <Text fontSize="sm" color="gray.600">Guardian: {enquiry.guardianName}</Text>
+                                    <Text fontSize="sm" color="gray.600">Email: {enquiry.email}</Text>
+                                    <Text fontSize="sm" color="gray.600">Mobile: {enquiry.mobile}</Text>
+                                    <Text fontSize="sm" color="gray.600">Phone: {enquiry.phone}</Text>
+                                    <Text fontSize="sm" color="gray.600">DOB: {new Date(enquiry.dob).toLocaleDateString()}</Text>
+                                    <Text fontSize="sm" color="gray.600">Address: {enquiry.street}, {enquiry.city}, {enquiry.state}, {enquiry.zip}</Text>
+                                    <Text fontSize="sm" color="gray.600">Country: {enquiry.country}</Text>
+                                    <Text fontSize="sm" color="gray.600">Enquiry Source: {enquiry.enquirySource}</Text>
+                                    <Text fontSize="md" mt="2">Description: {enquiry.description}</Text>
+                                </VStack>
+                            </AccordionPanel>
+                        </AccordionItem>
+                    ))
+                ) : (
+                    <Text>No enquiries found.</Text>
+                )}
+            </Accordion>
+        </Box>
+        </>
+    );
 }
