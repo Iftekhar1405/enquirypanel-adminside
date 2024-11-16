@@ -53,7 +53,6 @@ const darkTheme = extendTheme({
 });
 
 
-
 // Create a react-query client
 const queryClient = new QueryClient();
 

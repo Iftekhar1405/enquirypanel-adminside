@@ -2,7 +2,8 @@ import { Box, Text, Accordion, AccordionItem, AccordionButton, AccordionPanel,Sp
 import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import GoBackButton from "@/pages/components/GoBack";
 
 // Fetch a single enquiry by ID
 const fetchEnquiryById = async (id) => {
@@ -26,6 +27,11 @@ export default function EnquiryDetails() {
     const router = useRouter();
     const { id } = router.query;
 
+    const token =  localStorage.getItem('token')
+    useEffect(()=>{
+        const token = localStorage.getItem('token')
+        if(!token) router.push('/login')
+    },[router])
     if(!id) return <Spinner/>
     //
     const [newRemark, setNewRemark] = useState("");
@@ -89,6 +95,7 @@ export default function EnquiryDetails() {
 
     return (
         <Box maxW="800px" mx="auto" p="4">
+            <GoBackButton/>
             <Text fontSize="2xl" fontWeight="bold" mb="6">
                 Enquiry Details
             </Text>

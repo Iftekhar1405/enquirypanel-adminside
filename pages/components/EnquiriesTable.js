@@ -25,20 +25,20 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     CloseIcon,
+    DeleteIcon,
+    EditIcon,
 } from "@chakra-ui/icons";
 
 // Fetch enquiries data with filters
-
-
 export default function EnquiriesTable() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
     const [filters, setFilters] = useState([]); // To store multiple filters
+    const [debouncedFilters, setDebouncedFilters] = useState(filters); // For debounced filters
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
-    const [fetch,setFetch] = useState(true)
-
+    const [fetch, setFetch] = useState(true);
 
     const fetchEnquiries = async (searchTerm, filters, page, limit) => {
         const params = {
@@ -48,31 +48,37 @@ export default function EnquiriesTable() {
             page,
             limit,
         };
-
+        console.log("fetchEnquiries");
         const res = await axios.get("http://localhost:5000/enquiry/search", { params });
-        setFetch(false)
+        setFetch(false);
         return res.data;
     };
 
     // Debounce the search input to avoid refetching on every keystroke
     useEffect(() => {
-        const handler = debounce(() => setDebouncedSearchTerm(searchTerm), 300);
+        const handler = debounce(() => setDebouncedSearchTerm(searchTerm), 800); // 1 second debounce for search term
         handler();
         return () => handler.cancel();
     }, [searchTerm]);
 
-    // Pass debouncedSearchTerm and filters to fetchEnquiries
-    const validFilters = filters.filter((f) => f.key && f.value); // Only keep filters with both key and value
+    // Debounce filters
+    useEffect(() => {
+        const handler = debounce(() => setDebouncedFilters(filters), 800); // 1 second debounce for filters
+        handler();
+        return () => handler.cancel();
+    }, [filters]);
+
+    // Pass debouncedSearchTerm and debouncedFilters to fetchEnquiries
+    const validFilters = debouncedFilters.filter((f) => f.key && f.value); // Only keep filters with both key and value
 
     const { data, isLoading, isError, refetch } = useQuery({
-        queryKey: ["enquiries", debouncedSearchTerm, filters, page, limit],
-        queryFn: () => fetchEnquiries(debouncedSearchTerm, filters, page, limit),
-        enabled: fetch || validFilters.length > 0 || searchTerm !== '',
-                    });
+        queryKey: ["enquiries", debouncedSearchTerm, debouncedFilters, page, limit],
+        queryFn: () => fetchEnquiries(debouncedSearchTerm, debouncedFilters, page, limit),
+    });
 
     const columns = React.useMemo(
         () => [
-            { Header: "Description", accessor: "description" },
+            { Header: "Description", accessor: "description",id: "description"  },
             { Header: "Student Name", accessor: "studentFirstName" },
             { Header: "Grade", accessor: "grade" },
             { Header: "Guardian", accessor: "guardianName" },
@@ -86,16 +92,24 @@ export default function EnquiriesTable() {
             {
                 Header: "Actions",
                 Cell: ({ row }) => (
-                    <Button
-                        colorScheme="teal"
-                        size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/edit/${row.original._id}`);
-                        }}
-                    >
-                        Edit
-                    </Button>
+                    <HStack spacing={2}>
+                        <IconButton
+                            icon={<EditIcon/>}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/edit/${row.original._id}`);
+                            }   }
+                            aria-label="Edit"
+                            size="sm"
+                            colorScheme="cyan"/>
+                        <IconButton
+                            icon={<DeleteIcon />}
+                            onClick={(e) => handleDelete(row.original._id)}
+                            aria-label="Delete"
+                            size="sm"
+                            colorScheme="red"
+                        />
+                    </HStack>
                 ),
             },
         ],
@@ -106,9 +120,27 @@ export default function EnquiriesTable() {
         setSearchTerm(e.target.value);
     };
 
-    const handleAddFilter = () => {
-        setFilters([...filters, { key: "", value: "" }]); // Add an empty filter object
+    const handleDelete = async (id) => {
+        try {
+            // Perform delete action on the backend
+            await axios.delete(`http://localhost:5000/enquiry/${id}`);
+
+            // Optimistically update the query cache to remove the deleted item from the table
+            queryClient.invalidateQueries(["enquiries"]);
+
+            // Optionally, show a success message
+            alert("Enquiry deleted successfully.");
+        } catch (error) {
+            console.error("Failed to delete enquiry:", error);
+            alert("Failed to delete enquiry. Please try again later.");
+        }
     };
+
+    const handleAddFilter = () => {
+        if (filters.some(filter => filter.key === "" && filter.value === "")) return; // Prevent adding empty filters
+        setFilters([...filters, { key: "", value: "" }]);
+    };
+
 
     const handleFilterKeyChange = (index, e) => {
         const newFilters = [...filters];
@@ -151,39 +183,33 @@ export default function EnquiriesTable() {
 
     const handleLimitChange = (e) => {
         const newLimit = parseInt(e.target.value, 10);
-        if (!isNaN(newLimit)||newLimit===null) {
+        if (!isNaN(newLimit) || newLimit === null) {
             setLimit(newLimit);
         }
     };
 
     return (
-        <Box p={4}>
-
-
+        <Box p={4} >
             {/* Pagination and Limit Controls */}
-            <Box display="flex" alignItems="center" justifyContent="space-between" p={4} borderWidth={1} borderRadius="md">
-
-                    <Input
-                        placeholder="Search by description"
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        mb={4}
-                        width="100%"
-                        maxWidth="400px"
-                    />
-
-                    <Button leftIcon={<AddIcon />} onClick={handleAddFilter} colorScheme="blue" size="sm">
-                        Add Filter
-                    </Button>
-                <HStack p='4'>
+            <Box mb={3} display="flex" alignItems="center" justifyContent="space-between" p={4} borderWidth={1} borderRadius="md">
+                <Input
+                    placeholder="Search by description"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    mb={4}
+                    width="100%"
+                    maxWidth="400px"
+                />
+                <Button leftIcon={<AddIcon />} onClick={handleAddFilter} colorScheme="blue" size="sm">
+                    Add Filter
+                </Button>
+                <HStack p="4">
                     <Button
                         leftIcon={<ChevronLeftIcon />}
                         colorScheme="teal"
                         onClick={() => handlePageChange(page - 1)}
                         isDisabled={page === 1}
-                    >
-
-                    </Button>
+                    ></Button>
 
                     <Input
                         placeholder={page.toString()}
@@ -197,9 +223,7 @@ export default function EnquiriesTable() {
                         rightIcon={<ChevronRightIcon />}
                         colorScheme="teal"
                         onClick={() => handlePageChange(page + 1)}
-                    >
-
-                    </Button>
+                    ></Button>
 
                     <Text>Limit:</Text>
                     <Input
@@ -211,7 +235,8 @@ export default function EnquiriesTable() {
                     />
                 </HStack>
             </Box>
-            <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" placeItems='center'>
+
+            <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" placeItems="center">
                 {filters.map((filter, index) => (
                     <HStack key={index} mb={2} alignItems="center">
                         <Select
@@ -220,11 +245,11 @@ export default function EnquiriesTable() {
                             onChange={(e) => handleFilterKeyChange(index, e)}
                             width="200px"
                             sx={{
-                                'option': {
-                                    backgroundColor: 'gray.700', // Set the background color of options
-                                    color: 'white', // Set the text color of options
+                                "option": {
+                                    backgroundColor: "gray.700", // Set the background color of options
+                                    color: "white", // Set the text color of options
                                     _hover: {
-                                        backgroundColor: 'gray.600', // Set hover background color
+                                        backgroundColor: "gray.600", // Set hover background color
                                     },
                                 },
                             }}
@@ -254,14 +279,16 @@ export default function EnquiriesTable() {
                     </HStack>
                 ))}
             </Box>
-            {/* Loading Spinner or Data */}
+
             {isLoading ? (
                 <Spinner size="lg" />
             ) : isError ? (
                 <Text color="red.500">Error fetching data. Please try again later.</Text>
-            ) : (
+            ) : data && data.length === 0 ? (
+                <Text>No data found</Text>
+            ) :  (
                 <Box overflowX="auto">
-                    <Table {...getTableProps()} variant="simple" size="md">
+                    <Table {...getTableProps()} variant="simple" >
                         <Thead>
                             {headerGroups.map((headerGroup) => (
                                 <Tr {...headerGroup.getHeaderGroupProps()} bg="gray.700" color="white">
@@ -291,25 +318,30 @@ export default function EnquiriesTable() {
                                         cursor="pointer"
                                         _hover={{ bg: "gray.600" }}
                                     >
-                                        {row.cells.map((cell) => (
-                                            <Td
-                                                {...cell.getCellProps()}
-                                                py={3}
-                                                px={4}
-                                                fontSize="sm"
-                                                lineHeight="short"
-                                                whiteSpace="normal"
-                                                maxW="500px"
-                                                minW='100px'
-                                                overflowX='auto'
-                                            >
-                                                {cell.render("Cell")}
-                                            </Td>
-                                        ))}
+                                        {row.cells.map((cell) => {
+                                            const isDescriptionColumn = cell.column.id === "description"; // Check if the current column is 'description'
+
+                                            return (
+                                                <Td
+                                                    {...cell.getCellProps()}
+                                                    py={3}
+                                                    px={4}
+                                                    fontSize="sm"
+                                                    lineHeight="short"
+                                                    whiteSpace="normal"
+                                                    overflowX="auto"
+                                                    wordBreak="break-word"  // Ensures the text breaks if it exceeds the max width
+                                                    style={isDescriptionColumn ? { width: "100%" } : {}} // Take full horizontal space for 'description'
+                                                >
+                                                    {cell.render("Cell")}
+                                                </Td>
+                                            );
+                                        })}
                                     </Tr>
                                 );
                             })}
                         </Tbody>
+
                     </Table>
                 </Box>
             )}

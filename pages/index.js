@@ -1,3 +1,4 @@
+'use client'
 import {
     Box,
     Text,
@@ -7,12 +8,18 @@ import {
     AccordionPanel,
     AccordionIcon,
     VStack,
-    Spinner
+    Spinner,
+    HStack,
+    
+    Button,
+    Container
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import Dashboard from './components/Dashboard';
 import EnquiriesTable from "@/pages/components/EnquiriesTable";
+import GoBackButton from "@/pages/components/GoBack";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
 const fetchData = async (URL) => {
     const res = await axios.get(URL);
@@ -20,10 +27,16 @@ const fetchData = async (URL) => {
 };
 
 export default function Home() {
+    const router = useRouter()
+    useEffect(()=>{
+        const token = localStorage.getItem('token')
+        if(!token){router.push('/login')}
+    },[router])
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ['enquiries'],
         queryFn: () => fetchData('http://localhost:5000/enquiry') // Replace with your actual API endpoint
     });
+    
 
     if (isLoading) {
         return <Box><Spinner/></Box>;
@@ -32,17 +45,27 @@ export default function Home() {
     if (isError) {
         return <Box>Error: {error.message}</Box>;
     }
-
+    
+    const logoutpage=()=>{
+        const token=localStorage.removeItem("token")
+        if(!token){router.push('/login')}
+    }
     return (
-        <>
-            <Dashboard/>
+        <Box px={5} py={5}>
+           <HStack justify={"space-between"}px={5}>            
+            <GoBackButton/>
+            <Button onClick={logoutpage}>
+            LOGOUT
+            </Button>
+           </HStack>
+
             <EnquiriesTable/>
         <Box maxW="800px" mx="auto" p="4">
 
-            <Text fontSize="2xl" fontWeight="bold" mb="6">
+            {/* <Text fontSize="2xl" fontWeight="bold" mb="6">
                 Enquiries
-            </Text>
-            <Accordion allowToggle>
+            </Text> */}
+            {/* <Accordion allowToggle>
                 {data && data.length > 0 ? (
                     data.map((enquiry) => (
                         <AccordionItem key={enquiry._id} borderWidth="1px" borderRadius="md" mb="2">
@@ -72,8 +95,8 @@ export default function Home() {
                 ) : (
                     <Text>No enquiries found.</Text>
                 )}
-            </Accordion>
+            </Accordion> */}
         </Box>
-        </>
+        </Box>
     );
 }
