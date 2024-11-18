@@ -17,9 +17,9 @@ import {
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import EnquiriesTable from "@/pages/components/EnquiriesTable";
-import GoBackButton from "@/pages/components/GoBack";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import Navbar from "./components/navbar";
 
 const fetchData = async (URL) => {
     const res = await axios.get(URL);
@@ -51,13 +51,10 @@ export default function Home() {
         if(!token){router.push('/login')}
     }
     return (
-        <Box px={5} py={5}>
-           <HStack justify={"space-between"}px={5}>            
-            <GoBackButton/>
-            <Button onClick={logoutpage}>
-            LOGOUT
-            </Button>
-           </HStack>
+        <>
+        <Navbar/>
+        <Box px={5} py={5} mt='80px'>
+           
 
             <EnquiriesTable/>
         <Box maxW="800px" mx="auto" p="4">
@@ -98,5 +95,6 @@ export default function Home() {
             </Accordion> */}
         </Box>
         </Box>
+        </>
     );
 }

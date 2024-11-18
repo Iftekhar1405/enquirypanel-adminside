@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import GoBackButton from "@/pages/components/GoBack";
+import Navbar from "./components/navbar";
 
 // Fetch a single enquiry by ID
 const fetchEnquiryById = async (id) => {
@@ -94,7 +95,9 @@ export default function EnquiryDetails() {
     };
 
     return (
-        <Box maxW="800px" mx="auto" p="4">
+        <>
+        <Navbar/>
+        <Box maxW="800px" mx="auto" p="4" mt='80px'>
             <GoBackButton/>
             <Text fontSize="2xl" fontWeight="bold" mb="6">
                 Enquiry Details
@@ -174,5 +177,6 @@ export default function EnquiryDetails() {
 
 
         </Box>
+        </>
     );
 }

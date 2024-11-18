@@ -13,6 +13,8 @@ import {
     Select,
     HStack,
     IconButton,
+    TableContainer,
+    useColorModeValue,
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -37,7 +39,7 @@ export default function EnquiriesTable() {
     const [filters, setFilters] = useState([]); // To store multiple filters
     const [debouncedFilters, setDebouncedFilters] = useState(filters); // For debounced filters
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(20);
+    const [limit, setLimit] = useState(5);
     const [fetch, setFetch] = useState(true);
 
     const fetchEnquiries = async (searchTerm, filters, page, limit) => {
@@ -58,14 +60,14 @@ export default function EnquiriesTable() {
     useEffect(() => {
         const handler = debounce(() => setDebouncedSearchTerm(searchTerm), 800); // 1 second debounce for search term
         handler();
-        return () => handler.cancel();
+        // return () => handler.cancel();
     }, [searchTerm]);
 
     // Debounce filters
     useEffect(() => {
         const handler = debounce(() => setDebouncedFilters(filters), 800); // 1 second debounce for filters
         handler();
-        return () => handler.cancel();
+        // return () => handler.cancel();
     }, [filters]);
 
     // Pass debouncedSearchTerm and debouncedFilters to fetchEnquiries
@@ -187,44 +189,73 @@ export default function EnquiriesTable() {
             setLimit(newLimit);
         }
     };
+    const bgColor = useColorModeValue("gray.100", "gray.900"); // Background for the Box
+    const headBg = useColorModeValue("gray.600","gray.400")
+    const inputBg = useColorModeValue("white", "gray.700"); // Background for inputs
+    const inputBorder = useColorModeValue("gray.300", "gray.600"); // Border color for inputs
+    const textColor = useColorModeValue("gray.800", "white"); // Text color
+    const headTextColor= useColorModeValue("white","black")
+    const tableBg = useColorModeValue("white", "gray.800"); // Background for the table
+    const tableHoverBg = useColorModeValue("gray.200", "gray.600"); // Hover color for table rows
+
 
     return (
-        <Box p={4} >
+        <Box p={4} bg={bgColor} color={textColor}>
             {/* Pagination and Limit Controls */}
-            <Box mb={3} display="flex" alignItems="center" justifyContent="space-between" p={4} borderWidth={1} borderRadius="md">
-                <Input
-                    placeholder="Search by description"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    mb={4}
-                    width="100%"
-                    maxWidth="400px"
-                />
-                <Button leftIcon={<AddIcon />} onClick={handleAddFilter} colorScheme="blue" size="sm">
-                    Add Filter
-                </Button>
+            <Box
+                mb={3}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                p={4}
+                borderWidth={1}
+                borderRadius="md"
+                bg={tableBg}
+            >
+                <HStack p={"4"} align="center" justify="center" spacing={4}>
+                    <Input
+                        placeholder="Search by description"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        width="100%"
+                        maxWidth="400px"
+                        bg={inputBg}
+                        borderColor={inputBorder}
+                        color={textColor}
+                    />
+                    <Button
+                        leftIcon={<AddIcon />}
+                        onClick={handleAddFilter}
+                        colorScheme="blue"
+                        size="md"
+                        p="5"
+                        px="8"
+                    >
+                        Add Filter
+                    </Button>
+                </HStack>
                 <HStack p="4">
                     <Button
                         leftIcon={<ChevronLeftIcon />}
                         colorScheme="teal"
                         onClick={() => handlePageChange(page - 1)}
                         isDisabled={page === 1}
-                    ></Button>
-
+                    />
                     <Input
                         placeholder={page.toString()}
                         w="100px"
                         value={page}
                         onChange={(e) => handlePageChange(Number(e.target.value))}
                         type="number"
+                        bg={inputBg}
+                        borderColor={inputBorder}
+                        color={textColor}
                     />
-
                     <Button
                         rightIcon={<ChevronRightIcon />}
                         colorScheme="teal"
                         onClick={() => handlePageChange(page + 1)}
-                    ></Button>
-
+                    />
                     <Text>Limit:</Text>
                     <Input
                         w="100px"
@@ -232,6 +263,9 @@ export default function EnquiriesTable() {
                         onChange={handleLimitChange}
                         type="number"
                         placeholder={limit.toString()}
+                        bg={inputBg}
+                        borderColor={inputBorder}
+                        color={textColor}
                     />
                 </HStack>
             </Box>
@@ -244,15 +278,9 @@ export default function EnquiriesTable() {
                             value={filter.key}
                             onChange={(e) => handleFilterKeyChange(index, e)}
                             width="200px"
-                            sx={{
-                                "option": {
-                                    backgroundColor: "gray.700", // Set the background color of options
-                                    color: "white", // Set the text color of options
-                                    _hover: {
-                                        backgroundColor: "gray.600", // Set hover background color
-                                    },
-                                },
-                            }}
+                            bg={inputBg}
+                            borderColor={inputBorder}
+                            color={textColor}
                         >
                             <option value="studentFirstName">Student Name</option>
                             <option value="grade">Grade</option>
@@ -268,6 +296,9 @@ export default function EnquiriesTable() {
                             value={filter.value}
                             onChange={(e) => handleFilterValueChange(index, e)}
                             width="200px"
+                            bg={inputBg}
+                            borderColor={inputBorder}
+                            color={textColor}
                         />
                         <IconButton
                             icon={<CloseIcon />}
@@ -286,64 +317,42 @@ export default function EnquiriesTable() {
                 <Text color="red.500">Error fetching data. Please try again later.</Text>
             ) : data && data.length === 0 ? (
                 <Text>No data found</Text>
-            ) :  (
-                <Box overflowX="auto">
-                    <Table {...getTableProps()} variant="simple" >
+            ) : (
+                <TableContainer>
+                    <Table {...getTableProps()} bg={tableBg} >
                         <Thead>
                             {headerGroups.map((headerGroup) => (
-                                <Tr {...headerGroup.getHeaderGroupProps()} bg="gray.700" color="white">
+                                <Tr {...headerGroup.getHeaderGroupProps()} bg={headBg}
+                                >
                                     {headerGroup.headers.map((column) => (
-                                        <Th
-                                            {...column.getHeaderProps()}
-                                            py={3}
-                                            px={4}
-                                            textAlign="left"
-                                            fontSize="sm"
-                                            whiteSpace="nowrap"
-                                        >
-                                            {column.render("Header")}
-                                        </Th>
+                                        <Th {...column.getHeaderProps()} color={headTextColor}>{column.render("Header")}</Th>
                                     ))}
                                 </Tr>
                             ))}
                         </Thead>
-                        <Tbody {...getTableBodyProps()} bg="gray.800">
+                        <Tbody {...getTableBodyProps()}>
                             {rows.map((row) => {
                                 prepareRow(row);
                                 return (
                                     <Tr
                                         {...row.getRowProps()}
-                                        key={row.original._id}
-                                        onClick={() => handleRowClick(row.original._id)}
+                                        _hover={{ bg: tableHoverBg }}
                                         cursor="pointer"
-                                        _hover={{ bg: "gray.600" }}
                                     >
-                                        {row.cells.map((cell) => {
-                                            const isDescriptionColumn = cell.column.id === "description"; // Check if the current column is 'description'
-
-                                            return (
-                                                <Td
-                                                    {...cell.getCellProps()}
-                                                    py={3}
-                                                    px={4}
-                                                    fontSize="sm"
-                                                    lineHeight="short"
-                                                    whiteSpace="normal"
-                                                    overflowX="auto"
-                                                    wordBreak="break-word"  // Ensures the text breaks if it exceeds the max width
-                                                    style={isDescriptionColumn ? { width: "100%" } : {}} // Take full horizontal space for 'description'
-                                                >
-                                                    {cell.render("Cell")}
-                                                </Td>
-                                            );
-                                        })}
+                                        {row.cells.map((cell) => (
+                                            <Td {...cell.getCellProps()}
+                                            maxW="300px"
+                                            overflow='hidden'
+        textOverflow="ellipsis"
+                                            
+                                            >{cell.render("Cell")}</Td>
+                                        ))}
                                     </Tr>
                                 );
                             })}
                         </Tbody>
-
                     </Table>
-                </Box>
+                </TableContainer>
             )}
         </Box>
     );

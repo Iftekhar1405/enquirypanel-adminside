@@ -1,9 +1,9 @@
 import { Box, Text, Button, SimpleGrid } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import GoBackButton from "@/pages/components/GoBack";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import Navbar from "./components/navbar";
 
 // Fetch total enquiries count
 const fetchTotalEnquiries = async () => {
@@ -31,8 +31,8 @@ export default function Dashboard() {
 
     return (
         <>
-            <GoBackButton />
-            <Box p={6}>
+        <Navbar/>
+            <Box p={6} mt='80px'>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
                     <Box p={5} shadow="md" borderWidth="1px" bg="gray.800" color="white">
                         <Text fontSize="lg">Total Enquiries</Text>
