@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import Navbar from "../components/navbar";
 
 // Fetch single enquiry data
 const fetchEnquiry = async (id) => {
@@ -70,7 +71,9 @@ export default function EditEnquiry() {
     if (isError) return <Text>Error loading enquiry data.</Text>;
 
     return (
-        <Box p={6}>
+        <>
+        <Navbar/>
+        <Box p={6} mt='80px'>
             <Text fontSize="2xl" mb={4}>Edit Enquiry</Text>
             <form onSubmit={handleSubmit}>
                 <FormControl mb={3}>
@@ -155,5 +158,6 @@ export default function EditEnquiry() {
                 </Button>
             </form>
         </Box>
+        </>
     );
 }
