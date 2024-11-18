@@ -338,6 +338,7 @@ export default function EnquiriesTable() {
                                         {...row.getRowProps()}
                                         _hover={{ bg: tableHoverBg }}
                                         cursor="pointer"
+                                        onClick={() => router.push(`/${row.original._id}`)} // Redirect to the page with the row's ID
                                     >
                                         {row.cells.map((cell) => (
                                             <Td {...cell.getCellProps()}

@@ -3,7 +3,6 @@ import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import GoBackButton from "@/pages/components/GoBack";
 import Navbar from "./components/navbar";
 
 // Fetch a single enquiry by ID
@@ -28,12 +27,12 @@ export default function EnquiryDetails() {
     const router = useRouter();
     const { id } = router.query;
 
-    const token =  localStorage.getItem('token')
+    if(!id) return <Spinner/>
+
     useEffect(()=>{
         const token = localStorage.getItem('token')
         if(!token) router.push('/login')
     },[router])
-    if(!id) return <Spinner/>
     //
     const [newRemark, setNewRemark] = useState("");
     const queryClient = useQueryClient();
@@ -98,7 +97,6 @@ export default function EnquiryDetails() {
         <>
         <Navbar/>
         <Box maxW="800px" mx="auto" p="4" mt='80px'>
-            <GoBackButton/>
             <Text fontSize="2xl" fontWeight="bold" mb="6">
                 Enquiry Details
             </Text>
