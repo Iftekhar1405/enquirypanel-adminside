@@ -1,9 +1,4 @@
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DeleteIcon,
-  EditIcon,
-} from "@chakra-ui/icons";
+import { DeleteIcon, EditIcon, SearchIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -12,6 +7,8 @@ import {
   HStack,
   IconButton,
   Input,
+  InputGroup,
+  InputRightElement,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -19,6 +16,11 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  NumberDecrementStepper,
+  NumberIncrementStepper,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
   Spinner,
   Table,
   TableContainer,
@@ -37,9 +39,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { HiSelector } from "react-icons/hi";
+import { LuFilter, LuPrinter } from "react-icons/lu";
 import Select from "react-select";
 import { useTable } from "react-table";
+import { useReactToPrint } from "react-to-print";
 import { useErrorAlert, useSuccessAlert } from "../common/Alertfn";
 import EditEnquiry from "../edit/id";
 import { filterKeys, filterKeysValues } from "./filter";
@@ -56,11 +61,13 @@ export default function EnquiriesTable() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [input, setInput] = useState("1");
-
+  const [printing, setPrinting] = useState(false);
   const [fetch, setFetch] = useState(true);
   const [enquiryData, setEnquiryData] = useState({});
   const SuccessAlert = useSuccessAlert();
   const ErrorAlert = useErrorAlert();
+  const printRef = useRef(null);
+
   // console.log(fields);
   const [selectedFields, setSelectedField] = useState(
     fields
@@ -205,8 +212,8 @@ export default function EnquiriesTable() {
     console.log(pageCount, newPage);
   };
 
-  const handleLimitChange = (e) => {
-    const newLimit = parseInt(e.target.value, 10);
+  const handleLimitChange = (valueString) => {
+    const newLimit = parseInt(valueString, 10);
     setLimit(newLimit);
   };
 
@@ -235,6 +242,27 @@ export default function EnquiriesTable() {
     }
   }, [fields]);
 
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+
+    onBeforeGetContent: () => {
+      return new Promise((res) => {
+        setPrinting(true);
+        console.log("hello");
+        const element = printRef.current;
+        const originalOverflow = element.style.overflow;
+
+        element.style.overflow = "visible";
+
+        res();
+
+        return () => {
+          element.style.overflow = originalOverflow;
+        };
+      });
+    },
+  });
+
   return (
     <Box p={4} bg={bgColor} color={textColor}>
       <Box
@@ -253,17 +281,23 @@ export default function EnquiriesTable() {
             Total enquiries: {count}
           </Tag>
           <HStack p={4} align="center" spacing={4}>
-            <Input
-              placeholder="Search by any field"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              width="100%"
-              maxWidth="400px"
-              bg={inputBg}
-              borderColor={inputBorder}
-              color={textColor}
-            />
+            <InputGroup>
+              <Input
+                placeholder="Search by any field"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                width="100%"
+                maxWidth="400px"
+                bg={inputBg}
+                borderColor={inputBorder}
+                color={textColor}
+              />
+              <InputRightElement>
+                <SearchIcon />
+              </InputRightElement>
+            </InputGroup>
             <Button
+              leftIcon={<LuFilter />}
               onClick={() => setIsFilterModalOpen(true)}
               colorScheme="blue"
               p={5}
@@ -285,6 +319,7 @@ export default function EnquiriesTable() {
               </Button>
             )}
             <Button
+              leftIcon={<HiSelector />}
               onClick={() => setIsSelectFieldModalOpen(true)}
               colorScheme="blue"
               p={5}
@@ -292,6 +327,7 @@ export default function EnquiriesTable() {
             >
               Select Fields
             </Button>
+            <IconButton icon={<LuPrinter />} onClick={handlePrint} />
           </HStack>
         </VStack>
 
@@ -300,40 +336,52 @@ export default function EnquiriesTable() {
             Total pages: {pageCount}
           </Tag>
           <HStack p="4">
-            <Button
+            <Text>Page:</Text>
+            {/* <Button
               leftIcon={<ChevronLeftIcon />}
               colorScheme="teal"
               onClick={() => handlePageChange(Number(page) - 1)}
               isDisabled={page <= 1}
-            />
-            <Input
-              placeholder={page.toString()}
-              w={"50px"}
+            /> */}
+            <NumberInput
+              // defaultValue={page.toString}
+              minW="65px"
+              maxW="100px"
               value={input}
-              onChange={(e) => handlePageChange(e.target.value)}
-              type="number"
-              bg={inputBg}
-              borderColor={inputBorder}
-              color={textColor}
+              onChange={(valueString) => handlePageChange(valueString)}
               max={pageCount}
-            />
-            <Button
+              min={1}
+              allowMouseWheel
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+            {/* <Button
               rightIcon={<ChevronRightIcon />}
               colorScheme="teal"
               onClick={() => handlePageChange(Number(page) + 1)}
               isDisabled={page >= pageCount}
-            />
+            /> */}
             <Text>Limit:</Text>
-            <Input
-              w="50px"
+            <NumberInput
+              // defaultValue={page.toString}
+              minW="70px"
+              maxW="100px"
               value={limit}
-              onChange={handleLimitChange}
-              type="number"
-              placeholder={limit.toString()}
-              bg={inputBg}
-              borderColor={inputBorder}
-              color={textColor}
-            />
+              onChange={(valueString) => handleLimitChange(valueString)}
+              max={count}
+              min={1}
+              allowMouseWheel
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
           </HStack>
         </VStack>
       </Box>
@@ -454,70 +502,84 @@ export default function EnquiriesTable() {
       ) : data && data.length === 0 ? (
         <Text>No data found</Text>
       ) : (
-        <TableContainer>
-          <Table {...getTableProps()} bg={tableBg}>
-            <Thead>
-              {headerGroups.map((headerGroup) => (
-                <Tr {...headerGroup.getHeaderGroupProps()} bg={headBg}>
-                  {headerGroup.headers.map((column) => {
-                    const toShow = column.show;
-                    return (
-                      toShow && (
-                        <Th {...column.getHeaderProps()} color={headTextColor}>
-                          {column.render("Header")}
-                        </Th>
-                      )
-                    );
-                  })}
-                  <Th>Action</Th>
-                </Tr>
-              ))}
-            </Thead>
-            <Tbody {...getTableBodyProps()}>
-              {rows.map((row) => {
-                prepareRow(row);
-                return (
-                  <Tr
-                    {...row.getRowProps()}
-                    _hover={{ bg: tableHoverBg }}
-                    cursor="pointer"
-                    onClick={() => router.push(`/${row.original._id}`)}
-                  >
-                    {row.cells.map((cell) => {
-                      // console.log("cell", cell);
-                      const toShow = cell.column.show;
+        <div className="print">
+          <TableContainer>
+            <Table {...getTableProps()} bg={tableBg} ref={printRef}>
+              <Thead>
+                {headerGroups.map((headerGroup) => (
+                  <Tr {...headerGroup.getHeaderGroupProps()} bg={headBg}>
+                    {headerGroup.headers.map((column) => {
+                      const toShow = column.show;
                       return (
                         toShow && (
-                          <Td
-                            {...cell.getCellProps()}
-                            maxW="300px"
-                            overflow="hidden"
-                            textOverflow="ellipsis"
+                          <Th
+                            {...column.getHeaderProps()}
+                            color={headTextColor}
                           >
-                            {typeof cell.value == "boolean" ? (
-                              cell.value.toString()
-                            ) : cell.column.Header === "Actions" ? (
-                              <ActionButton
-                                row={row}
-                                editFunc={editFunc}
-                                handleDelete={handleDelete}
-                              />
-                            ) : cell.value !== undefined &&
-                              cell.value !== null ? (
-                              cell.render("Cell")
-                            ) : (
-                              "N/A"
-                            )}
-                          </Td>
+                            {column.render("Header")}
+                          </Th>
                         )
                       );
                     })}
+                    <Th
+                      sx={{
+                        "@media print": {
+                          display: "none",
+                        },
+                      }}
+                    >
+                      Action
+                    </Th>
                   </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        </TableContainer>
+                ))}
+              </Thead>
+              <Tbody {...getTableBodyProps()}>
+                {rows.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <Tr
+                      {...row.getRowProps()}
+                      _hover={{ bg: tableHoverBg }}
+                      cursor="pointer"
+                      onClick={() => router.push(`/${row.original._id}`)}
+                    >
+                      {row.cells.map((cell) => {
+                        // console.log("cell", cell);
+                        const toShow = cell.column.show;
+                        return (
+                          toShow && (
+                            <Td
+                              {...cell.getCellProps()}
+                              maxW="300px"
+                              overflow="hidden"
+                              textOverflow="ellipsis"
+                            >
+                              {typeof cell.value == "boolean" ? (
+                                cell.value.toString()
+                              ) : cell.column.Header === "Actions" &&
+                                !printing ? (
+                                <ActionButton
+                                  row={row}
+                                  editFunc={editFunc}
+                                  handleDelete={handleDelete}
+                                />
+                              ) : cell.value !== undefined &&
+                                cell.value !== null ? (
+                                cell.render("Cell")
+                              ) : (
+                                "N/A"
+                              )}
+                            </Td>
+                          )
+                        );
+                      })}
+                    </Tr>
+                  );
+                })}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        </div>
       )}
       <EditEnquiry isOpen={isOpen} onClose={onClose} data={enquiryData} />
     </Box>
@@ -526,7 +588,14 @@ export default function EnquiriesTable() {
 
 function ActionButton({ row, editFunc, handleDelete }) {
   return (
-    <HStack spacing={2}>
+    <HStack
+      spacing={2}
+      sx={{
+        "@media print": {
+          display: "none",
+        },
+      }}
+    >
       <IconButton
         icon={<EditIcon />}
         onClick={(e) => editFunc(e, row)}

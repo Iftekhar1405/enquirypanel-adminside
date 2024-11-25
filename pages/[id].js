@@ -14,14 +14,17 @@ import {
   Tabs,
   Text,
   Textarea,
+  useColorModeValue,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { HiPrinter } from "react-icons/hi2";
+import { useReactToPrint } from "react-to-print";
 import { useErrorAlert, useSuccessAlert } from "./common/Alertfn";
 import { Loader } from "./components/Loader";
 import Navbar from "./components/navbar";
@@ -48,7 +51,6 @@ const deleteRemark = async (remarkId) =>
 export default function EnquiryDetails() {
   const SuccessAlert = useSuccessAlert();
   const ErrorAlert = useErrorAlert();
-
   const router = useRouter();
   const { id } = router.query;
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -56,6 +58,11 @@ export default function EnquiryDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [editRemarkId, setEditRemarkId] = useState(null);
   const queryClient = useQueryClient();
+  const printRef = useRef(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -154,19 +161,28 @@ export default function EnquiryDetails() {
   };
 
   const { _id, __v, ...enquiryDetails } = enquiryData;
+  const bgColor = useColorModeValue("gray.100", "gray.900");
+  const textColor = useColorModeValue("gray.800", "white");
 
   return (
     <>
       <Navbar back="/" />
       <Loader isLoading={isEnquiryLoading}>
-        <Box maxW="1200px" mx="auto" p="4" mt="80px">
+        <Box
+          maxW="1200px"
+          mx="auto"
+          p="4"
+          mt="80px"
+          bg={bgColor}
+          color={textColor}
+        >
           <Tabs size="md" variant="enclosed" colorScheme="red">
             <TabList>
               <Tab>Details</Tab>
               <Tab>Remarks</Tab>
             </TabList>
             <TabPanels>
-              <TabPanel>
+              <TabPanel ref={printRef} bg={bgColor} color={textColor}>
                 <HStack justify="space-between" mb={4}>
                   <HStack>
                     <Avatar name={enquiryData.studentFirstName} />
@@ -175,13 +191,16 @@ export default function EnquiryDetails() {
                       {enquiryData.studentLastName}
                     </Text>
                   </HStack>
-                  <Button
-                    leftIcon={<EditIcon />}
-                    onClick={onOpen}
-                    colorScheme="teal"
-                  >
-                    Edit Enquiry
-                  </Button>
+                  <HStack>
+                    <Button
+                      leftIcon={<EditIcon />}
+                      onClick={onOpen}
+                      colorScheme="teal"
+                    >
+                      Edit Enquiry
+                    </Button>
+                    <IconButton icon={<HiPrinter />} onClick={handlePrint} />
+                  </HStack>
                 </HStack>
                 <Box p="4" borderWidth="1px" borderRadius="md">
                   <VStack spacing={4} align="start">

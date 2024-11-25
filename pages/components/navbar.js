@@ -1,7 +1,6 @@
 import { ChevronLeftIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
 import {
   Box,
-  Button,
   Flex,
   HStack,
   IconButton,
@@ -11,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { LuLogOut } from "react-icons/lu";
 
 const Navbar = ({ back }) => {
   const router = useRouter();
@@ -121,7 +121,8 @@ const Navbar = ({ back }) => {
           >
             {colorMode === "light" ? <MoonIcon /> : <SunIcon />}
           </IconButton>
-          <Button
+          <IconButton
+            icon={<LuLogOut />}
             onClick={handleLogout}
             bg="gray.800"
             color="white"
@@ -131,9 +132,7 @@ const Navbar = ({ back }) => {
             border="1px solid"
             borderColor="gray.600"
             boxShadow="lg"
-          >
-            Logout
-          </Button>
+          />
         </HStack>
       </Flex>
     </Box>
