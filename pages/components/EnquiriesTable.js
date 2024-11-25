@@ -504,7 +504,12 @@ export default function EnquiriesTable() {
       ) : (
         <div className="print">
           <TableContainer>
-            <Table {...getTableProps()} bg={tableBg} ref={printRef}>
+            <Table
+              {...getTableProps()}
+              bg={tableBg}
+              ref={printRef}
+              color={textColor}
+            >
               <Thead>
                 {headerGroups.map((headerGroup) => (
                   <Tr {...headerGroup.getHeaderGroupProps()} bg={headBg}>
@@ -515,21 +520,20 @@ export default function EnquiriesTable() {
                           <Th
                             {...column.getHeaderProps()}
                             color={headTextColor}
+                            css={
+                              column.Header === "Actions" && {
+                                "@media print": { display: "none" },
+                              }
+                            }
                           >
                             {column.render("Header")}
                           </Th>
                         )
                       );
                     })}
-                    <Th
-                      sx={{
-                        "@media print": {
-                          display: "none",
-                        },
-                      }}
-                    >
-                      Action
-                    </Th>
+                    <Box style={{ "@media print": { display: "none" } }}>
+                      <Th>Action</Th>
+                    </Box>
                   </Tr>
                 ))}
               </Thead>

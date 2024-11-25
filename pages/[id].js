@@ -196,10 +196,23 @@ export default function EnquiryDetails() {
                       leftIcon={<EditIcon />}
                       onClick={onOpen}
                       colorScheme="teal"
+                      sx={{
+                        "@media print": {
+                          display: "none",
+                        },
+                      }}
                     >
                       Edit Enquiry
                     </Button>
-                    <IconButton icon={<HiPrinter />} onClick={handlePrint} />
+                    <IconButton
+                      icon={<HiPrinter />}
+                      onClick={handlePrint}
+                      sx={{
+                        "@media print": {
+                          display: "none",
+                        },
+                      }}
+                    />
                   </HStack>
                 </HStack>
                 <Box p="4" borderWidth="1px" borderRadius="md">

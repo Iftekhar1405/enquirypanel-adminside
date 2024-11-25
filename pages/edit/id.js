@@ -11,6 +11,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
 import axios from "axios";
@@ -53,13 +54,16 @@ export default function EditEnquiry({ isOpen, onClose, data }) {
     }
   };
 
+  const bgColor = useColorModeValue("gray.100", "gray.900");
+  const textColor = useColorModeValue("gray.800", "white");
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={"5xl"}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Edit Enquiry</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
+        <ModalBody bg={bgColor} color={textColor}>
           <VStack spacing={4}>
             {Object.entries(formState || {}).map(([key, value]) => {
               // console.log("keys and value",key , value)
