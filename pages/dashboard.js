@@ -31,7 +31,7 @@ export default function Dashboard() {
 
     return (
         <>
-        <Navbar/>
+        <Navbar back='/'/>
             <Box p={6} mt='80px'>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
                     <Box p={5} shadow="md" borderWidth="1px" bg="gray.800" color="white">

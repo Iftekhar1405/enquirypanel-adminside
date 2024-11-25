@@ -1,18 +1,24 @@
-import { Box, Flex, Button, Spacer, Text, IconButton, Link, useColorMode, HStack } from "@chakra-ui/react";
-import { useRouter } from "next/router";
 import { ChevronLeftIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  IconButton,
+  Spacer,
+  Text,
+  useColorMode,
+} from "@chakra-ui/react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
-const Navbar = () => {
+const Navbar = ({ back }) => {
   const router = useRouter();
   const { colorMode, toggleColorMode } = useColorMode();
 
   const handleLogout = () => {
     localStorage.removeItem("token"); // Clears the token from local storage
     router.push("/login"); // Redirect to login page
-  };
-
-  const handleBack = () => {
-    router.back(); // Navigate to the previous page
   };
 
   // Function to check if the link is active
@@ -33,11 +39,9 @@ const Navbar = () => {
       zIndex={10}
     >
       <Flex alignItems="center">
-        {/* Back Button */}
         <IconButton
           icon={<ChevronLeftIcon />}
           aria-label="Back"
-          onClick={handleBack}
           bg="gray.800"
           color="white"
           _hover={{
@@ -46,6 +50,8 @@ const Navbar = () => {
           border="1px solid"
           borderColor="gray.600"
           boxShadow="lg"
+          isDisabled={back === ""}
+          onClick={() => router.back()}
         />
 
         {/* Title */}
@@ -60,7 +66,6 @@ const Navbar = () => {
         </Text>
 
         <Spacer />
-     
 
         {/* Nav Links */}
         <HStack gap={5}>
@@ -68,7 +73,7 @@ const Navbar = () => {
             href="/"
             fontSize="md"
             fontWeight="medium"
-            textDecoration="none" 
+            textDecoration="none"
             _hover={{
               textDecoration: "underline",
               color: "gray.300",
@@ -76,7 +81,7 @@ const Navbar = () => {
           >
             Home
           </Link>
-          
+
           {/* <Link
             href="/about"
             fontSize="md"
@@ -104,33 +109,32 @@ const Navbar = () => {
             Dashboard
           </Link>
           <IconButton
-      onClick={toggleColorMode}
-      
-      bg="gray.800"
-      color="white"
-      _hover={{
-        bg: "gray.700",
-      }}
-      border="1px solid"
-      borderColor="gray.600"
-      boxShadow="lg"
-    >{colorMode === "light" ? <MoonIcon /> : <SunIcon />}</IconButton>
-    <Button
-          onClick={handleLogout}
-          bg="gray.800"
-          color="white"
-          _hover={{
-            bg: "gray.700",
-          }}
-          border="1px solid"
-          borderColor="gray.600"
-          boxShadow="lg"
-        >
-          Logout
-        </Button>
+            onClick={toggleColorMode}
+            bg="gray.800"
+            color="white"
+            _hover={{
+              bg: "gray.700",
+            }}
+            border="1px solid"
+            borderColor="gray.600"
+            boxShadow="lg"
+          >
+            {colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+          </IconButton>
+          <Button
+            onClick={handleLogout}
+            bg="gray.800"
+            color="white"
+            _hover={{
+              bg: "gray.700",
+            }}
+            border="1px solid"
+            borderColor="gray.600"
+            boxShadow="lg"
+          >
+            Logout
+          </Button>
         </HStack>
-       
-        
       </Flex>
     </Box>
   );
