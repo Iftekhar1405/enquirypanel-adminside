@@ -1,4 +1,10 @@
-import { DeleteIcon, EditIcon, SearchIcon } from "@chakra-ui/icons";
+import {
+  CheckIcon,
+  DeleteIcon,
+  EditIcon,
+  EmailIcon,
+  SearchIcon,
+} from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -40,8 +46,8 @@ import axios from "axios";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { HiSelector } from "react-icons/hi";
-import { LuFilter, LuPrinter } from "react-icons/lu";
+import { HiSortAscending, HiSortDescending } from "react-icons/hi";
+import { LuFilter, LuPhoneCall, LuPrinter } from "react-icons/lu";
 import Select from "react-select";
 import { useTable } from "react-table";
 import { useReactToPrint } from "react-to-print";
@@ -66,6 +72,7 @@ export default function EnquiriesTable() {
   const [enquiryData, setEnquiryData] = useState({});
   const SuccessAlert = useSuccessAlert();
   const ErrorAlert = useErrorAlert();
+  const [sort, setSort] = useState({});
   const printRef = useRef(null);
 
   // console.log(fields);
@@ -73,19 +80,39 @@ export default function EnquiriesTable() {
     fields
       ? JSON.parse(fields)
       : [
-          { Header: "Description", accessor: "description", show: true },
-          { Header: "Student Name", accessor: "studentFirstName", show: true },
-          { Header: "Grade", accessor: "grade", show: true },
-          { Header: "Gender", accessor: "gender", show: false },
-          { Header: "Hostel", accessor: "hostel", show: false },
-          { Header: "Guardian", accessor: "guardianName", show: true },
-          { Header: "Enquiry Source", accessor: "enquirySource", show: false },
-          { Header: "Email", accessor: "email", show: false },
-          { Header: "Phone", accessor: "phone", show: false },
-          { Header: "Mobile", accessor: "mobile", show: true },
-          { Header: "City", accessor: "city", show: false },
-          { Header: "State", accessor: "state", show: true },
-          { Header: "Country", accessor: "country", show: true },
+          {
+            Header: "Description",
+            accessor: "description",
+            show: true,
+            sort: "asc",
+          },
+          {
+            Header: "Student Name",
+            accessor: "studentFirstName",
+            show: true,
+            sort: "asc",
+          },
+          { Header: "Grade", accessor: "grade", show: true, sort: "asc" },
+          { Header: "Gender", accessor: "gender", show: false, sort: "asc" },
+          { Header: "Hostel", accessor: "hostel", show: false, sort: "asc" },
+          {
+            Header: "Guardian",
+            accessor: "guardianName",
+            show: true,
+            sort: "asc",
+          },
+          {
+            Header: "Enquiry Source",
+            accessor: "enquirySource",
+            show: false,
+            sort: "asc",
+          },
+          { Header: "Email", accessor: "email", show: false, sort: "asc" },
+          { Header: "Phone", accessor: "phone", show: false, sort: "asc" },
+          { Header: "Mobile", accessor: "mobile", show: true, sort: "asc" },
+          { Header: "City", accessor: "city", show: false, sort: "asc" },
+          { Header: "State", accessor: "state", show: true, sort: "asc" },
+          { Header: "Country", accessor: "country", show: true, sort: "asc" },
           {
             Header: "Actions",
             show: true,
@@ -96,22 +123,24 @@ export default function EnquiriesTable() {
   // const [finalFilter,setFinalFilter] = useState([])
   // console.log("selected", selectedFields, typeof true);
 
-  const fetchEnquiries = async (searchTerm, filters, page, limit) => {
+  const fetchEnquiries = async (searchTerm, filters, page, limit, sort) => {
     const params = {
-      searchTerm: searchTerm || "", // Pass the search term directly
+      searchTerm: searchTerm || "",
       value: searchTerm,
-      filters: filters ? JSON.stringify(filters) : "{}", // Ensure filters are a valid JSON string
+      filters: filters ? JSON.stringify(filters) : "{}",
       page,
       limit,
+      sort: sort ? JSON.stringify(sort) : "{}",
     };
-    // console.log("fetchEnquiries");
+
     const res = await axios.get("http://localhost:5000/enquiry/search", {
       params,
     });
+
     setFetch(false);
-    // console.log("res",res)
     return res.data;
   };
+
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const debouncedSearch = useMemo(
@@ -129,9 +158,16 @@ export default function EnquiriesTable() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["enquiries", debouncedSearchTerm, debouncedFilters, page, limit],
+    queryKey: [
+      "enquiries",
+      debouncedSearchTerm,
+      debouncedFilters,
+      page,
+      limit,
+      sort,
+    ],
     queryFn: () =>
-      fetchEnquiries(debouncedSearchTerm, debouncedFilters, page, limit),
+      fetchEnquiries(debouncedSearchTerm, debouncedFilters, page, limit, sort),
   });
   const { data, count, pageCount } = enquiries || {};
   // console.log("console",data,count,pageCount)
@@ -262,6 +298,21 @@ export default function EnquiriesTable() {
       });
     },
   });
+  const handleSort = (column) => {
+    const key = column.id;
+    const newSortOrder = column.sort === "asc" ? "desc" : "asc";
+
+    setSort({
+      [key]: newSortOrder,
+    });
+
+    setSelectedField((cols) =>
+      cols.map((col) =>
+        col.accessor === key ? { ...col, sort: newSortOrder } : col
+      )
+    );
+    console.log(sort);
+  };
 
   return (
     <Box p={4} bg={bgColor} color={textColor}>
@@ -319,11 +370,12 @@ export default function EnquiriesTable() {
               </Button>
             )}
             <Button
-              leftIcon={<HiSelector />}
+              leftIcon={<CheckIcon />}
               onClick={() => setIsSelectFieldModalOpen(true)}
-              colorScheme="blue"
+              colorScheme="teal"
               p={5}
               px={8}
+              variant={"outline"}
             >
               Select Fields
             </Button>
@@ -346,6 +398,7 @@ export default function EnquiriesTable() {
             <NumberInput
               // defaultValue={page.toString}
               minW="65px"
+              width={"65px"}
               maxW="100px"
               value={input}
               onChange={(valueString) => handlePageChange(valueString)}
@@ -369,6 +422,7 @@ export default function EnquiriesTable() {
             <NumberInput
               // defaultValue={page.toString}
               minW="70px"
+              width={"70px"}
               maxW="100px"
               value={limit}
               onChange={(valueString) => handleLimitChange(valueString)}
@@ -515,6 +569,7 @@ export default function EnquiriesTable() {
                   <Tr {...headerGroup.getHeaderGroupProps()} bg={headBg}>
                     {headerGroup.headers.map((column) => {
                       const toShow = column.show;
+                      // console.log(selectedFields, column);
                       return (
                         toShow && (
                           <Th
@@ -527,13 +582,31 @@ export default function EnquiriesTable() {
                             }
                           >
                             {column.render("Header")}
+                            {column.Header !== "Actions" &&
+                              (column.sort === "asc" ? (
+                                <IconButton
+                                  icon={<HiSortAscending />}
+                                  onClick={() => handleSort(column)}
+                                  size={"sm"}
+                                  color={headTextColor}
+                                  bg={"transparent"}
+                                />
+                              ) : (
+                                <IconButton
+                                  icon={<HiSortDescending />}
+                                  onClick={() => handleSort(column)}
+                                  size={"sm"}
+                                  color={headTextColor}
+                                  bg={"transparent"}
+                                />
+                              ))}
                           </Th>
                         )
                       );
                     })}
-                    <Box style={{ "@media print": { display: "none" } }}>
+                    {/* <Box style={{ "@media print": { display: "none" } }}>
                       <Th>Action</Th>
-                    </Box>
+                    </Box> */}
                   </Tr>
                 ))}
               </Thead>
@@ -600,6 +673,21 @@ function ActionButton({ row, editFunc, handleDelete }) {
         },
       }}
     >
+      <a
+        href={`tel:${row.original.mobile}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <IconButton
+          icon={<LuPhoneCall />}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </a>
+      <a
+        href={`mailto:${row.original.email}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <IconButton icon={<EmailIcon />} onClick={(e) => e.stopPropagation()} />
+      </a>
       <IconButton
         icon={<EditIcon />}
         onClick={(e) => editFunc(e, row)}
