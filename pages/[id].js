@@ -23,6 +23,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { HiPrinter } from "react-icons/hi2";
 import { useReactToPrint } from "react-to-print";
 import { useErrorAlert, useSuccessAlert } from "./common/Alertfn";
@@ -59,6 +60,8 @@ export default function EnquiryDetails() {
   const [editRemarkId, setEditRemarkId] = useState(null);
   const queryClient = useQueryClient();
   const printRef = useRef(null);
+  const [aiInsight, setAIInsight] = useState("");
+  const [expectedReply, setExpectedReply] = useState("");
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -136,6 +139,25 @@ export default function EnquiryDetails() {
 
   if (!id || isEnquiryLoading) return <Spinner />;
   if (isEnquiryError) return <Box>Error: {enquiryError.message}</Box>;
+  const genAI = new GoogleGenerativeAI(
+    "AIzaSyCV5D1rcZ3EN9sa0l7elScHMnawyAmEiUM"
+  );
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  async function genRes() {
+    const res =
+      await model.generateContent(`hey we are the school administrate, one of the parents have a query
+      that is ${enquiryData.description}.\n the child is in ${enquiryData.grade}\n what insights can you give about this enquiry`);
+    const expRes =
+      await model.generateContent(`hey we are the school administrate, one of the parents have a query
+    that is ${enquiryData.description}.\n the child is in ${enquiryData.grade}\n what could be the reply of this enquiry`);
+
+    console.log(res.response.text());
+    setAIInsight(res.response.text());
+    setExpectedReply(expRes.response.text());
+  }
+  useEffect(() => {
+    genRes();
+  }, []);
 
   const handleRemarkSubmit = () => {
     if (newRemark.trim()) {
@@ -227,6 +249,14 @@ export default function EnquiryDetails() {
                     ))}
                   </VStack>
                 </Box>
+                <Text size={"2xl"} p={5}>
+                  Insights
+                </Text>
+                <Box p={5}>{aiInsight ? aiInsight : ""}</Box>
+                <Text size={"2xl"} p={5}>
+                  Expected Reply
+                </Text>
+                <Box p={5}>{expectedReply ? expectedReply : ""}</Box>
               </TabPanel>
               <TabPanel>
                 <Box>
